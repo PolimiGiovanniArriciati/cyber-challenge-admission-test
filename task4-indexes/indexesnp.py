@@ -25,7 +25,8 @@ def count_intervals_opt(N, arr):
     possible_equivalences = compute_indexes(N, arr)
     M = np.zeros((N, N), dtype=int)
     for pos, el in enumerate(tqdm(arr, desc="looking for intervals in the array")):
-    # TODO: direct access to the possible_equivalences pairs to prioritize the closest ones.
+        # TODO: direct access to the possible_equivalences pairs to prioritize the closest ones.
+        min_triplet_index = np.inf
         for i0, i1 in possible_equivalences[el].values():
             i0 = i0[i0 > pos]
             i1 = i1[i1 > pos]
@@ -39,17 +40,20 @@ def count_intervals_opt(N, arr):
                     # there is only one value to be joint and is not possible to create the triplet, skip
                     continue
                 val2_index = i1[1]
-            M[0 : pos + 1, max(val1_index, val2_index) :] = 1
-            if max(val1_index, val2_index) == pos + 2:
+            if min_triplet_index > max(val1_index, val2_index):
+                min_triplet_index = max(val1_index, val2_index)
+            if min_triplet_index == pos + 2:
                 # the best possible case is found, can break the loop for this element
                 break
+        if min_triplet_index is not np.inf:
+            M[0 : pos + 1, min_triplet_index:] = 1
     return np.sum(M)
 
 
 def compute_indexes(N, arr):
     max_val = np.max(arr)
     indexes = np.arange(N, dtype=int)
-    possible_equivalences = {val:{} for val in range(1, max_val+1) }
+    possible_equivalences = {val: {} for val in range(1, max_val + 1)}
     for val in trange(
         1, max_val + 1, desc="applying roots on index!?"
     ):  # can this be optimized? what values should we consider?
@@ -64,9 +68,15 @@ def compute_indexes(N, arr):
                 i2 = indexes[arr == val3]
                 if i0.size == 0 or i1.size == 0 or i2.size == 0:
                     continue
-                possible_equivalences[val][(val2, val3)] = np.array((i1, i2), dtype=object)
-                possible_equivalences[val2][(val, val3)] = np.array((i0, i2), dtype=object)
-                possible_equivalences[val3][(val, val2)] = np.array((i0, i1), dtype=object)
+                possible_equivalences[val][(val2, val3)] = np.array(
+                    (i1, i2), dtype=object
+                )
+                possible_equivalences[val2][(val, val3)] = np.array(
+                    (i0, i2), dtype=object
+                )
+                possible_equivalences[val3][(val, val2)] = np.array(
+                    (i0, i1), dtype=object
+                )
     return possible_equivalences
 
 
