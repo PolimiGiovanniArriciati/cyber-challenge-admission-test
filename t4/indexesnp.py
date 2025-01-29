@@ -16,7 +16,7 @@ amici_moltiplicatori = {
     for n in trange(1, 10_000 + 1, desc="computing possible roots")
 }
 divisors = {
-    n**2: divisors(n**2) for n in trange(1, 10_000 + 1, desc="computing possible roots")
+    n: divisors(n**2) for n in trange(1, 10_000 + 1, desc="computing possible roots")
 }
 
 
