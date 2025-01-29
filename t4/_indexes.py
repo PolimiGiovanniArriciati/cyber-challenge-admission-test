@@ -14,7 +14,6 @@ def count_intervals(N, a):
     # WRITE YOUR CODE HERE
     cases = set()
     count = 0
-    max__ = max(a)**2
     for i in range(N):
         for j in range(i+1, N):
             for k in range(j+1, N):
