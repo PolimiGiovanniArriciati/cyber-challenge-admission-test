@@ -7,26 +7,38 @@ from itertools import combinations
 
 # Compute and print results
 amici_moltiplicatori = {
-    n**2: zip(divisors(n**2), divisors(n**2)[::-1])
+    n
+    ** 2: [
+        (val2, val3)
+        for val2, val3 in zip(divisors(n**2), divisors(n**2)[::-1])
+        if val2 <= val3
+    ]
     for n in trange(1, 10_000 + 1, desc="computing possible roots")
 }
+divisors = {
+    n**2: divisors(n**2) for n in trange(1, 10_000 + 1, desc="computing possible roots")
+}
+
 
 # look for all the possible root values
 def count_intervals_opt(N, arr):
     possible_equivalences = compute_indexes(N, arr)
     M = np.zeros((N, N), dtype=int)
     for pos, el in enumerate(tqdm(arr, desc="looking for intervals in the array")):
-        for i0, i1 in possible_equivalences[el - 1]:
-            if i0[i0 > pos].size == 0 or i1[i1 > pos].size == 0:
+    # TODO: direct access to the possible_equivalences pairs to prioritize the closest ones.
+        for i0, i1 in possible_equivalences[el].values():
+            i0 = i0[i0 > pos]
+            i1 = i1[i1 > pos]
+            if i0.size == 0 or i1.size == 0:
                 continue
-            val1_index = i0[i0 > pos][0]
-            val2_index = i1[i1 > pos][0]
+            val1_index = i0[0]
+            val2_index = i1[0]
             if val1_index == val2_index:
                 # pick the next one.
-                if i0[i0 > pos].size == 1 and i1[i1 > pos].size == 1:
+                if i0.size == 1 and i1.size == 1:
                     # there is only one value to be joint and is not possible to create the triplet, skip
                     continue
-                val2_index = i1[i1 > pos][1]
+                val2_index = i1[1]
             M[0 : pos + 1, max(val1_index, val2_index) :] = 1
             if max(val1_index, val2_index) == pos + 2:
                 # the best possible case is found, can break the loop for this element
@@ -37,7 +49,7 @@ def count_intervals_opt(N, arr):
 def compute_indexes(N, arr):
     max_val = np.max(arr)
     indexes = np.arange(N, dtype=int)
-    possible_equivalences = [[] for _ in range(max_val)]
+    possible_equivalences = {val:{} for val in range(1, max_val+1) }
     for val in trange(
         1, max_val + 1, desc="applying roots on index!?"
     ):  # can this be optimized? what values should we consider?
@@ -52,9 +64,9 @@ def compute_indexes(N, arr):
                 i2 = indexes[arr == val3]
                 if i0.size == 0 or i1.size == 0 or i2.size == 0:
                     continue
-                possible_equivalences[val - 1].append(np.array((i1, i2), dtype=object))
-                possible_equivalences[val2 - 1].append(np.array((i0, i2), dtype=object))
-                possible_equivalences[val3 - 1].append(np.array((i0, i1), dtype=object))
+                possible_equivalences[val][(val2, val3)] = np.array((i1, i2), dtype=object)
+                possible_equivalences[val2][(val, val3)] = np.array((i0, i2), dtype=object)
+                possible_equivalences[val3][(val, val2)] = np.array((i0, i1), dtype=object)
     return possible_equivalences
 
 
@@ -83,7 +95,7 @@ def challenge():
         input = "input.txt"
     print(f"Reading from: {input}")
     fin = open(input, "r")  # Input file provided by the platform
-    fout = open("output.txt", "w")  # Output file to submit
+    fout = open(f"output-{input}", "w")  # Output file to submit
 
     T = int(fin.readline().strip())
 
